@@ -209,16 +209,31 @@ make check    # vet + race tests + contracts + TinyGo example build
 
 ## Hardware status
 
+Validated on an M5StickC Plus2 with the real unit, driven by
+`examples/validate` (guided checklist, one gesture per step, PASS only when the
+expected event pattern shows up):
+
 | Check | Result |
 |---|---|
-| `tinygo build -target=m5stick-c` | ✅ 39.7 KB flash / 4.9 KB RAM |
-| Flash + boot on M5StickC Plus2 (`/dev/cu.usbserial-*`) | ✅ warning + `ready` |
-| Hold timing on device (`SetHoldTime(800ms)`) | ✅ `HoldStart` 802 ms |
-| Click / double click / hold with the real unit | ⛔ pending (unit not on PORT B) |
-| RAM/flash budget | ✅ `Device` 200 B |
+| `tinygo build` / `tinygo flash` (`m5stick-c`) | ✅ 45 KB flash / 4.9 KB RAM |
+| Port auto-detection (pull-down probe) | ✅ found the unit on **PORT A** (G32/G33) |
+| 1 click (blue, red) | ✅ `Pressed` → `Released` → `Click` |
+| Double click (blue, red) | ✅ `Released|DoubleClick`, no trailing `Click` |
+| Triple click | ✅ `MultiClick` exactly `window` after the release edge |
+| Hold 1.5 s / 2 s | ✅ `HoldStart` at ~800 ms, `HoldEnd`, no `Click` |
+| Hold repeat 200 ms | ✅ 8 ticks, **0–1 ms jitter** |
+| Both buttons together | ✅ 10 ms skew, independent state machines |
+| 10 rapid presses | ✅ 5 × `DoubleClick`, 0 stray `Click` |
+| **PORT B (G26/G36)** | ⚠️ not validated: the unit was plugged into PORT A on this board |
 
-Benchmarks in [BENCHMARKS.md](BENCHMARKS.md) are host measurements (fake pin and
-clock); they measure the state machine, not the GPIO.
+The driver is pin-agnostic, so the PORT A run validates the whole state
+machine; only the `StickCPlus2Red`/`StickCPlus2Blue` constants and the
+GPIO36-without-pull-up path remain unexercised on hardware.
+
+`examples/validate` also detects the port itself: it pulls both Grove pairs
+down and keeps the pair that stays high (the unit has 10K to 5 V against the
+MCU's ~45K pull-down). That is the cheap, deterministic way to answer "is the
+unit plugged in, and where" with no I2C and no extra pin.
 
 ## References
 

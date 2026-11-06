@@ -4,7 +4,7 @@ COUNT ?= 8
 BENCH ?= .
 BENCHTIME ?= 1s
 
-.PHONY: test vet fmt check bench bench-save bench-compare alloc footprint escape profile examples
+.PHONY: test vet fmt check bench bench-save bench-compare alloc footprint escape profile examples validate
 
 test:
 	go test -race ./...
@@ -44,3 +44,9 @@ profile:
 
 examples:
 	$(TINYGO) build -target=$(TARGET) -size short -o /tmp/m5unit-dualbutton-read.bin ./examples/read
+	$(TINYGO) build -target=$(TARGET) -size short -o /tmp/m5unit-dualbutton-validate.bin ./examples/validate
+
+# Guided hardware checklist: detects the Grove port, then asks for one gesture
+# at a time (backlight: 1 blink = new step, 2 = PASS, 5 = FAIL).
+validate:
+	$(TINYGO) flash -target=$(TARGET) -port=$(PORT) -size short -monitor ./examples/validate

@@ -419,11 +419,22 @@ família.
 - [x] Flash + boot do `examples/read` em M5StickC Plus2
       (`/dev/cu.usbserial-5A6C0570831`): boot ok, warning de unit ausente,
       `HoldStart` em 802 ms, `HoldTick` a 200 ms no serial.
+- [x] Validação funcional com o unit real via `examples/validate`
+      (checklist guiado): 9/9 PASS — click, double, multi, hold, hold repeat,
+      os dois juntos, 10 presses rápidos; jitter de `HoldTick` 0–1 ms.
+- [x] Auto-detecção de porta no firmware de validação (probe com pull-down).
 - [ ] `m5stick-hardware-pocs/units/dualbutton/main.go` consumindo a tag.
 - [ ] UI: dois indicadores (azul/vermelho) + contador de eventos + serial 1 Hz.
-- [ ] Validação na matriz §7 (click/double/hold com o unit conectado).
+- [ ] Repetir o checklist com o cabo no **PORT B** (G26/G36) para cobrir o
+      caminho do GPIO36 sem pull-up.
 
-**Bloqueio registrado (2026-11-05):** com a placa conectada, G26/G36 estão
+**Resultado (2026-11-05):** o unit estava no **PORT A** (G32/G33), não no
+PORT B. O firmware detectou isso sozinho e rodou o checklist inteiro ali:
+9/9 PASS. Evidência de que não era problema de leitura: apertar o vermelho
+derrubou G32 para L e voltou a H ao soltar. O PORT B ficou sem validação
+porque o cabo não estava nele.
+
+**Histórico do bloqueio anterior (2026-11-05):** com a placa conectada, G26/G36 estão
 **flutuando** (medição: G26 `noPull=L`, `pullup=H`, `pulldown=L`; G32/G33
 variando; sem resposta em nenhum dos pinos do Grove). Conclusão: **nada plugado
 em PORT B** no momento do teste, então o unit não pôde ser validado. O driver

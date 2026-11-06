@@ -79,18 +79,22 @@ make escape     # go build -gcflags=-m | grep escapes
   (uma escrita/leitura de registrador) é maior: some ~dezenas de ns por pin
   read. Mesmo assim, a 100 Hz isso continua irrelevante frente a BLE/LCD.
 
-## Nota de hardware (ESP32)
+## Medições no alvo (ESP32, M5StickC Plus2)
 
-Não há benchmark de `Update` no alvo: `testing.B` é do runtime Go do host. O que
-foi medido na placa (M5StickC Plus2) é a **correção do relógio** e do caminho de
-leitura:
+`testing.B` é do runtime Go do host, então o que se mede na placa é **tempo de
+reação e jitter**, não `ns/op`. Números do checklist em `examples/validate`,
+com o unit real:
 
 | Medida | Resultado |
 |---|---|
-| Boot + `ConfigureInput` em G26/G36 | ok, sem travar |
-| `SetHoldTime(800ms)` → `HoldStart` | 802 ms (via `Held()` no alvo) |
-| `SetHoldRepeat(200ms)` | ticks de 200 ms no serial |
-| `Update` a 100 Hz (loop do exemplo) | estável, sem jitter visível no log |
+| `HoldStart` após press (impresso 50 ms depois da borda física) | 751–753 ms → **~800 ms reais** |
+| `HoldTick` com `SetHoldRepeat(200ms)` | 8 ticks, **jitter 0–1 ms** |
+| `DoubleClick` (press-to-press 70–131 ms) | dispara no release, sem `Click` extra |
+| `MultiClick` de 3 clicks | exatamente `janela (400 ms)` após a borda de release |
+| 10 presses rápidos em 3,5 s | 5 × `DoubleClick`, **0 `Click` espúrio**, 0 evento perdido |
+| Dois botões no mesmo `Update` | skew de 10 ms entre eles |
+| Debounce de 50 ms em todos os gestos | nenhum falso `Pressed`/`Released` |
 
-Se for necessário medir `Update` no ESP32, o caminho é instrumentar o firmware
-com `machine` ticks (não `testing.B`) e publicar os números aqui.
+O relevante: a FSM no alvo entrega timing de 1 ms de jitter, e não houve um
+único evento perdido/duplicado em 9 gestos seguidos.
+

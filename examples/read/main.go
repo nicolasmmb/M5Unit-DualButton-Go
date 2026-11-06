@@ -27,6 +27,13 @@ func main() {
 	}
 	d.SetHoldRepeat(200 * time.Millisecond)
 
+	time.Sleep(100 * time.Millisecond)
+	if d.Update(); d.Down(dualbutton.Blue) && d.Down(dualbutton.Red) {
+		// G36 has no internal pull, so an unconnected PORT B floats low and
+		// looks like both buttons held. That is a wiring warning, not a driver
+		// error: no chip means no presence detection.
+		println("warning: both buttons read pressed at boot; is the unit connected?")
+	}
 	println("dualbutton: ready (yellow=Red G26, white=Blue G36)")
 
 	last := time.Now()

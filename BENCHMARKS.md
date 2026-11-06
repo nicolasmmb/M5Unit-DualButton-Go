@@ -78,3 +78,19 @@ make escape     # go build -gcflags=-m | grep escapes
 - Emulador de pino devolve constante, então o custo real da GPIO no ESP32
   (uma escrita/leitura de registrador) é maior: some ~dezenas de ns por pin
   read. Mesmo assim, a 100 Hz isso continua irrelevante frente a BLE/LCD.
+
+## Nota de hardware (ESP32)
+
+Não há benchmark de `Update` no alvo: `testing.B` é do runtime Go do host. O que
+foi medido na placa (M5StickC Plus2) é a **correção do relógio** e do caminho de
+leitura:
+
+| Medida | Resultado |
+|---|---|
+| Boot + `ConfigureInput` em G26/G36 | ok, sem travar |
+| `SetHoldTime(800ms)` → `HoldStart` | 802 ms (via `Held()` no alvo) |
+| `SetHoldRepeat(200ms)` | ticks de 200 ms no serial |
+| `Update` a 100 Hz (loop do exemplo) | estável, sem jitter visível no log |
+
+Se for necessário medir `Update` no ESP32, o caminho é instrumentar o firmware
+com `machine` ticks (não `testing.B`) e publicar os números aqui.

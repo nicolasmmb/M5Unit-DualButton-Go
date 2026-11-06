@@ -199,8 +199,26 @@ make check    # vet + race tests + contracts + TinyGo example build
   reentrancy; a `SetHandler` can be added without breaking the API.
 - Debounce is level-based, not a filter with hysteresis; tact switches with
   very long bounce (>50 ms) need a higher `SetDebounce`.
-- The driver cannot tell whether the unit is connected — the pins look the
-  same as open inputs.
+- The driver cannot tell whether the unit is connected — there is no chip to
+  identify. With **nothing on PORT B**, GPIO26/GPIO36 float and read **low**,
+  so the device reports *both buttons held* from the first `Update`. That is a
+  wiring symptom, not a driver bug: check the Grove cable/port (the example
+  prints a warning when both buttons read pressed at boot).
+- The unit needs the 5 V rail of PORT B: without it the on-board 10K pull-up
+  is dead and the 20K pulldown holds both signals low (same symptom).
+
+## Hardware status
+
+| Check | Result |
+|---|---|
+| `tinygo build -target=m5stick-c` | ✅ 39.7 KB flash / 4.9 KB RAM |
+| Flash + boot on M5StickC Plus2 (`/dev/cu.usbserial-*`) | ✅ warning + `ready` |
+| Hold timing on device (`SetHoldTime(800ms)`) | ✅ `HoldStart` 802 ms |
+| Click / double click / hold with the real unit | ⛔ pending (unit not on PORT B) |
+| RAM/flash budget | ✅ `Device` 200 B |
+
+Benchmarks in [BENCHMARKS.md](BENCHMARKS.md) are host measurements (fake pin and
+clock); they measure the state machine, not the GPIO.
 
 ## References
 

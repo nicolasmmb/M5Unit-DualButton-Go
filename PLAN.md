@@ -416,9 +416,19 @@ família.
 
 ### Fase 5 — POC e validação de hardware
 
+- [x] Flash + boot do `examples/read` em M5StickC Plus2
+      (`/dev/cu.usbserial-5A6C0570831`): boot ok, warning de unit ausente,
+      `HoldStart` em 802 ms, `HoldTick` a 200 ms no serial.
 - [ ] `m5stick-hardware-pocs/units/dualbutton/main.go` consumindo a tag.
 - [ ] UI: dois indicadores (azul/vermelho) + contador de eventos + serial 1 Hz.
-- [ ] Validação na matriz §7, registrando resultados no PLAN.
+- [ ] Validação na matriz §7 (click/double/hold com o unit conectado).
+
+**Bloqueio registrado (2026-11-05):** com a placa conectada, G26/G36 estão
+**flutuando** (medição: G26 `noPull=L`, `pullup=H`, `pulldown=L`; G32/G33
+variando; sem resposta em nenhum dos pinos do Grove). Conclusão: **nada plugado
+em PORT B** no momento do teste, então o unit não pôde ser validado. O driver
+reagiu corretamente — pinos em nível baixo viram "ambos pressionados", e o
+exemplo agora avisa isso no boot.
 - **DoD:** eventos coerentes em uso real, sem falso press, sem bounce visível.
 
 ---

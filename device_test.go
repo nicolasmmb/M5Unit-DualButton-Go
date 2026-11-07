@@ -575,3 +575,46 @@ func countClickEvents(ev Events) int {
 	}
 	return n
 }
+
+// TestNewLayout checks the wiring: Blue and Red are not swapped.
+func TestNewLayout(t *testing.T) {
+	blue := &fakePin{level: true}
+	red := &fakePin{level: true}
+	l := Layout{Name: "fake", Blue: blue, Red: red}
+
+	d, err := NewLayout(l)
+	if err != nil {
+		t.Fatalf("NewLayout: %v", err)
+	}
+	d.SetClock(&fakeClock{})
+
+	red.level = false // press the red button
+	d.Update()
+	if !d.Down(Red) || d.Down(Blue) {
+		t.Fatal("Layout swapped Blue and Red")
+	}
+
+	if _, err := NewLayout(Layout{}); err != ErrNilPin {
+		t.Fatalf("empty layout = %v, want ErrNilPin", err)
+	}
+}
+
+// TestChoose covers the decision behind Detect on the host.
+func TestChoose(t *testing.T) {
+	portB := Layout{Name: "PORT B"}
+	portA := Layout{Name: "PORT A"}
+	cands := []Layout{portB, portA}
+
+	if got, ok := Choose(cands, []bool{false, true}); !ok || got.Name != "PORT A" {
+		t.Fatalf("choose = %q %v, want PORT A", got.Name, ok)
+	}
+	if got, ok := Choose(cands, []bool{true, true}); !ok || got.Name != "PORT B" {
+		t.Fatalf("first wins = %q %v", got.Name, ok)
+	}
+	if _, ok := Choose(cands, []bool{false, false}); ok {
+		t.Fatal("nothing connected must not match")
+	}
+	if _, ok := Choose(cands, nil); ok {
+		t.Fatal("missing probe results must not match")
+	}
+}

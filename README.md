@@ -112,7 +112,11 @@ Poll between 5 and 20 ms. `Update` never blocks and never allocates; `Down`,
 | `SetHoldRepeat(d)` | Hold tick interval, 0 (default) disables |
 | `SetMaxClicks(n)` | 1–4, default 2 |
 | `SetClock(Clock)` | Replace `time.Now`-backed clock |
-| `ConfigureInput(p machine.Pin)` | `//go:build esp32`, input without pull |
+| `ConfigureInput(p machine.Pin)` | Input without pull (ESP32/C3/S3/RP2040) |
+| `Layout` + `NewLayout(l)` | Named connector with the two pins in logical order |
+| `Layout.Configure()` | Input mode for both pins (ESP32/C3/S3/RP2040) |
+| `Detect(cands ...Layout) (Layout, bool)` | Finds the connector that has the unit |
+| `Choose(cands, high)` | The pure decision behind Detect, host-testable |
 
 Events:
 
@@ -134,6 +138,25 @@ Events:
 | `1` | `Click` fires at the release debounce; double click disabled |
 | `2` (default) | single click waits for the window, double click fires immediately |
 | `3` / `4` | `MultiClick` after the window |
+
+## Port detection
+
+The unit is a passive divider, so a pull-down probe tells where it is: the
+connected pair stays high, an empty connector falls.
+
+```go
+layout, ok := dualbutton.Detect(dualbutton.StickCPlus2PortB, dualbutton.StickCPlus2PortA)
+if !ok {
+    println("unit? check the Grove cable")
+    return
+}
+println("unit on", layout.Name)   // "StickC Plus2 PORT A"
+
+d, err := dualbutton.NewLayout(layout)
+```
+
+`Detect` is the same probe the validation firmware used to find the unit on
+PORT A when the cable was on the wrong connector.
 
 ## Semantics and caveats
 

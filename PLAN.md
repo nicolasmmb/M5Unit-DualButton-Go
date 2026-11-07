@@ -414,6 +414,13 @@ família.
 - [ ] Tag `v0.1.0`; commits agrupados (feat/test/docs) como no guia.
 - **DoD:** `go get ...@v0.1.0` funciona a partir do repo de POC.
 
+### Fase 4.5 — Layout e Detect (v0.2.0)
+
+- [x] `Layout`, `NewLayout`, `Choose` (host).
+- [x] `Layout.Configure`, `Detect`, `StickCPlus2PortA/PortB` (placa).
+- [x] `ConfigureInput` em C3/S3/RP2040.
+- [x] Gate de CI de agnosticismo.
+
 ### Fase 5 — POC e validação de hardware
 
 - [x] Flash + boot do `examples/read` em M5StickC Plus2

@@ -155,8 +155,9 @@ println("unit on", layout.Name)   // "StickC Plus2 PORT A"
 d, err := dualbutton.NewLayout(layout)
 ```
 
-`Detect` is the same probe the validation firmware used to find the unit on
-PORT A when the cable was on the wrong connector.
+`Detect` is the probe that found the unit on PORT A when the cable was on the
+wrong connector. `examples/validate` uses it, so the firmware has no copy of
+the probe.
 
 ## Semantics and caveats
 

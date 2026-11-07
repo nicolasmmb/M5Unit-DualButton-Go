@@ -2,8 +2,8 @@
 
 // Guided validation firmware for the M5Stack Unit Dual Button.
 //
-// It first detects which Grove port the unit is plugged into, then walks a
-// checklist of gestures. The firmware never guesses: every step only passes
+// It first detects which Grove port the unit is plugged into (dualbutton.Detect),
+// then walks a checklist of gestures. The firmware never guesses: every step only passes
 // when the expected event pattern shows up in the driver.
 //
 // Feedback on the M5StickC Plus2 LCD backlight (GPIO27):
@@ -35,18 +35,6 @@ const (
 	simulWindow  = 400 * time.Millisecond
 )
 
-type pair struct {
-	name string
-	a, b machine.Pin
-}
-
-var candidates = []pair{
-	{name: "PORT B", a: machine.GPIO26, b: machine.GPIO36},
-	// PORT A: yellow (red button) is G32, white (blue button) is G33, same
-	// Grove pin order as PORT B, so the pair is passed as (blue, red).
-	{name: "PORT A", a: machine.GPIO33, b: machine.GPIO32},
-}
-
 type validator struct {
 	port  string
 	d     *dualbutton.Device
@@ -63,8 +51,24 @@ func main() {
 	println("dualbutton: guided validation")
 	println("backlight: 1 blink = new step, 2 = PASS, 5 = FAIL")
 
-	p := detect()
-	d, err := dualbutton.New(p.a, p.b)
+	// Detect probes both Grove connectors: the unit divider keeps a connected
+	// pair high while an empty connector follows the pull-down. The pins are
+	// left as plain inputs, so NewLayout can use them right away.
+	var layout dualbutton.Layout
+	ok := false
+	for attempt := 0; attempt < 60; attempt++ {
+		if layout, ok = dualbutton.Detect(dualbutton.StickCPlus2PortB, dualbutton.StickCPlus2PortA); ok {
+			break
+		}
+		println("detect: waiting for the unit (plug it on PORT A or B)")
+		time.Sleep(2 * time.Second)
+	}
+	if !ok {
+		println("detect: unit not found, check the Grove cable")
+		failFlash()
+		return
+	}
+	d, err := dualbutton.NewLayout(layout)
 	if err != nil {
 		println("dualbutton: new:", err.Error())
 		failFlash()
@@ -72,62 +76,13 @@ func main() {
 	}
 	d.SetHoldTime(holdTime)
 
-	v := &validator{port: p.name, d: d, start: time.Now()}
-	println("unit detected on", p.name)
+	v := &validator{port: layout.Name, d: d, start: time.Now()}
+	println("unit detected on", layout.Name)
 	v.run()
 	v.summary()
 }
 
 func (v *validator) now() int64 { return int64(time.Since(v.start) / time.Millisecond) }
-
-func level(p machine.Pin) string {
-	if p.Get() {
-		return "H"
-	}
-	return "L"
-}
-
-// probe prints the electrical signature of both Grove ports. A port with the
-// unit attached keeps both lines high even with the internal pull-down on
-// (the unit has 10K to 5 V against the MCU's ~45K pull-down); an empty port
-// follows the pull-down and reads low.
-func probe() (string, machine.Pin, machine.Pin) {
-	sig := ""
-	var found machine.Pin
-	var found2 machine.Pin
-	for _, c := range candidates {
-		c.a.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-		c.b.Configure(machine.PinConfig{Mode: machine.PinInputPulldown})
-		time.Sleep(5 * time.Millisecond)
-		a, b := level(c.a), level(c.b)
-		c.a.Configure(machine.PinConfig{Mode: machine.PinInput})
-		c.b.Configure(machine.PinConfig{Mode: machine.PinInput})
-		sig += " " + c.name + "=" + a + b
-		if a == "H" && b == "H" {
-			found, found2 = c.a, c.b
-		}
-	}
-	return sig, found, found2
-}
-
-func detect() pair {
-	for i := 0; i < 60; i++ {
-		sig, a, b := probe()
-		if a != 0 {
-			for _, c := range candidates {
-				if c.a == a && c.b == b {
-					println("probe:"+sig+" ->", c.name)
-					blinkMany(2, 80)
-					return c
-				}
-			}
-		}
-		println("detect: waiting for the unit |pulldown probe:" + sig)
-		time.Sleep(2 * time.Second)
-	}
-	println("detect: unit not found, continuing anyway on PORT B")
-	return candidates[0]
-}
 
 func (v *validator) prompt(text string) {
 	v.step++

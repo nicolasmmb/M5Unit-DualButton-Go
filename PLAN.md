@@ -3,7 +3,7 @@
 Driver **100% Go** para o **M5Stack Unit Dual Button (SKU U025)**.
 
 - Módulo: `github.com/nicolasmmb/M5Unit-DualButton-Go`
-- Diretório: `/Users/nicolas.mmb/__DEV__/M5Unit-DualButton-Go`
+- Diretório: `/Users/nicolas.mmb/__DEV__/m5-libs/M5Unit-DualButton-Go`
 - Padrão de referência: `m5stick-hardware-pocs/docs/LIB-CREATION-GUIDE.md`
 - Status: **Fases 0–4 concluídas**; falta publicar (tag/repo) e validar em
   hardware (Fase 5)
